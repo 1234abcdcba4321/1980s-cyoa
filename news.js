@@ -87,7 +87,7 @@ const NEWS = [[ //this was copied off wikipedia so it's not polished but w/e
 ["May 25 - Indianapolis 500: Johnny Rutherford wins for a third time in car owner Jim Hall's revolutionary ground effect Chaparral car; the victory is Hall's second as an owner.",145],
 ["May 26 - John Frum supporters in Vanuatu storm government offices on the island of Tanna. Vanuatu government troops land the next day and drive them away.",146],
 ["May 26 - In South Korea, military government forces and pro-democracy protesters clash; 2,000 protesters die.",146],
-["May 26 - Vernon Jordan is shot and critically injured in an assassination attempt in Fort Wayne, Indiana, by Joseph Paul Franklin (the first major news story for CNN)."]
+["May 26 - Vernon Jordan is shot and critically injured in an assassination attempt in Fort Wayne, Indiana, by Joseph Paul Franklin (the first major news story for CNN).",146],
 ["May 28 - A fiery bus crash near the small village of Webb, Saskatchewan, claims 22 lives.",148],
 ["June 1 - The first 24-hour news channel, Cable News Network (CNN) is launched.",152],
 ["June 3 - 1980 Grand Island tornado outbreak: A series of deadly tornadoes strikes Grand Island, Nebraska, causing over $300m in damage, killing five people and injuring over 250.",154],
@@ -1600,6 +1600,5 @@ function convertNews() { //convert news placed through a few find and replace fi
             i += j-1;
         } else str += '["'+ news[i].replace(/"+/g,'\\"') +'",'+monthToDay(news[i])+'],\n';
     }
-document.getElementById("newsbox").innerText = str
-//return str;
+    return str;
 }
