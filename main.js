@@ -15,25 +15,57 @@ function monthDisplay(d) { //convert an amount of days into a month and date
 function updateDisplay() {
     document.getElementById("header1").innerHTML = monthDisplay(day)+", 198"+year+", Happiness: "+happiness
 }
-function advanceDays(days) {
+function advanceDays(days,auto) {
     happiness *= 0.99**days; //you lose 1% of your happiness, whether positive or negative, per day.
     day += days;
-    if (day > 365) {
+    if (day > 365) { //on day 365, you're onto a new year.
         day -= 365;
         year++;
-        if (year == 10) gameEnd();
+        if (year == 10) gameEnd(); //game lasts a decade
     }
+    if (!auto) achCheck[0] = false;
+    if (autonews) autoNews();
     updateDisplay();
 }
-function gameEnd() {
-    //the end of the game. function not created yet.
+function gameEnd() { //the end of the game.
+    if (achCheck[0]) giveAchievement(1);
+    document.getElementById("header").style.display = "none"
 }
 function addText(text) {
     if (!text) return false;
     document.getElementById("body").innerHTML += "<br>"+text;
 }
 
-const newsRead = [[],[],[],[],[],[],[],[],[],[]]
+///////////////news
+const newsRead = [[],[],[],[],[],[],[],[],[],[]];
+
+document.getElementById("newsbtn").onclick = function() {
+    const msg = getNews();
+    if (msg) {
+        advanceDays(1);
+        addText(msg);
+    } else {
+        if (newsRead[9].includes(newsRead[9].length-1)) giveAchievement(0);
+        addText("There is no news left for you to read.");
+    }
+}
+let autonews = false;
+document.getElementById("autonews").onclick = function() {
+    if (year>0) {
+        if (!confirm("Are you sure you would like to enable auto-news? It will skip a lot of days!")) return;
+    }
+    autonews=true;
+    document.getElementById("autonews").style.display="none";
+    autoNews();
+    addText("Auto-news has been enabled.");
+}
+function autoNews() {
+    let msg = getNews();
+    if (msg) {
+        addText(msg);
+        advanceDays(1)
+    }
+}
 
 function getNews() {
     let j = NEWS[year].length-1;
@@ -53,22 +85,40 @@ function getNews() {
             }
         }
     }
-    if (newsRead[9].includes(newsRead[9].length-1)) giveAchievement(0) //potentially unlock auto-news? or on a route
-    return "There is no news left for you to read."
+    return false
 }
 
+/////////////////achievements
 let achievements = JSON.parse(localStorage.getItem("1980achievements"));
 if (!achievements) achievements=[];
+let achCheck = [true]
 
 function giveAchievement(id) {
     if (achievements.includes(id)) return false;
-    console.log("awarded achievement: "+id);
+    console.log(new Date().getTime()+": awarded achievement "+id);
     achievements.push(id);
     localStorage.setItem("1980achievements",JSON.stringify(achievements));
 }
+const ACHIEVEMENTS = [ //[name,locked desc,unlocked desc]
+    ["Real news","???","Read every news message. Unlocks auto-news, not that you'll need it anymore."],
+    ["True idle","Every 60 seconds, one day advances automatically.","Reach the end without passing any days except by idling. Unlocks an advance day button."],
+]
+document.getElementById("achmenu").onclick = function() {
+    const str = ["<br><b>Locked achievements:</b>","<br><br><b>Unlocked achievements:</b>"]
+    for (let i=0;i<ACHIEVEMENTS.length;i++) {
+        const base = "<br>"+ ACHIEVEMENTS[i][0] +" - ";
+        if (achievements.includes(i)) str[1] += base + ACHIEVEMENTS[i][2];
+        else str[0] += base + ACHIEVEMENTS[i][1];
+    }
+    if (achievements.length==0) str[1] += "<br>None yet! Completed achievements will appear here."
+    if (achievements.length==ACHIEVEMENTS.length) str[0] += "You've completed all of them. Thanks for playing!<br>Contact on Discord: slabdrill#7381"
+    addText(str[0]+str[1]+"<hr>");
+}
 
-setInterval(advanceDays,60000,1); //automatically advance 1 day every minute. time waits for no one!
+setInterval(advanceDays,60000,1,true); //automatically advance 1 day every minute. time waits for no one!
 
 function init() {
+    if (achievements[0]) document.getElementById("autonews").style.display = "block"
+    if (achievements[1]) document.getElementById("skipday").style.display = "block"
     updateDisplay()
 }
