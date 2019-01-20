@@ -4,13 +4,45 @@
         <meta charset="utf-8"/>
         <title>1980s Pop Culture</title>
         <meta name="1980s Pop Culture" content="A game made for grade 11 history." />
-        <script type="text/javascript" src="main.js"></script>
-        <script type="text/javascript" src="news.js"></script>
         <link rel="stylesheet" type="text/css" href="styles.css">
     </head>
-<body style="margin-top:30px" onload="updateDisplay()">
-    <div id="header">Stress: 5</div>
-    <textarea id="newsbox"></textarea>
-    Text<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>and some text for scrolling...
+<body style="margin-top:35px" onload="init()">
+    <div id=header>
+        <div id=header1></div><br>
+        
+    </div>
+    <div id=body></div>
+    <div id=natclothes>
+        <select id=nattop>
+            <option value=sweater>Turtleneck</option>
+            <option value=trenchcoat>Trenchcoat</option>
+            <option value=tunic>Tunic</option>
+            <option value=croptop>Croptop</option>
+            <option value=jumpsuit>Jumpsuit</option>
+            <option value=bustier>Bustier</option>
+            <option value=jacket>Jacket</option>
+        </select>
+        <select id=natbottom>
+            <option value=slacks>Slacks</option>
+            <option value=tights>Tights</option>
+            <option value=skirt>Flared Skirt</option>
+            <option value=miniskirt>Slim Miniskirt</option>
+            <option value=dress>Dress</option>
+        </select>
+        <button id="natsubmit">I've decided what to wear!</button>
+    </div>
+    <hr>
+    <div id=actions>
+        <button id=newsbtn>Read the news</button>
+        <button id=work>Work overtime</button>
+        <br>
+        <button id=achmenu>View achievements</button>
+        <button id=miscinfo>View credits</button>
+        <button id=autonews style="display:none">Enable Auto-news</button>
+        <button id=skipday style="display:none" onclick="advanceDays(1)">Advance a day</button>
+    </div>
+    <script type="text/javascript" src="main.js"></script>
+    <script type="text/javascript" src="news.js"></script>
 </body>
 </html>
+
