@@ -16,6 +16,8 @@ function monthDisplay(d) { //convert an amount of days into a month and date
 
 function updateDisplay() {
     document.getElementById("header1").innerHTML = monthDisplay(day)+", 198"+year+"; Happiness: "+happiness+"; Money: "+money+"Bonds: Alex="+affection[0]+" Natalie="+affection[1]
+    if (affection[1] < -5 || affection[1]/2+happiness < -10) document.getElementById("hangnat").style.display = "none"; //you can't hang out if you aren't close, or you're unhappy!
+    else if (affection[1] > 0 || affection[1]/2+happiness > -5) document.getElementById("hangnat").style.display = "block"; //and once you aren't hanging out, it takes a bit to be able to again
 }
 function advanceDays(days,auto) {
     happiness *= 0.99**days; //you lose 1% of your happiness, whether positive or negative, per day.
@@ -34,7 +36,7 @@ function advanceDays(days,auto) {
         tempEvent[2];
     }
     if (!auto) achCheck[0] = false;
-    if (autonews) autoNews();
+    if (autonews) autoNews(true);
     updateDisplay();
 }
 function gameEnd() { //the end of the game.
@@ -57,11 +59,12 @@ document.getElementById("work").onclick = function() {
 ///////////////news
 const newsRead = [[],[],[],[],[],[],[],[],[],[]];
 
-document.getElementById("newsbtn").onclick = function() {
+document.getElementById("newsbtn").onclick = function(force) {
     const msg = getNews();
     if (msg) {
-        advanceDays(1);
+        if (!force) advanceDays(1);
         addText(msg);
+        if (/*have computer*/false && !force) document.getElementById("newsbtn").onclick(true);
     } else {
         if (newsRead[9].includes(newsRead[9].length-1)) giveAchievement(0);
         addText("There is no news left for you to read.");
@@ -77,11 +80,14 @@ document.getElementById("autonews").onclick = function() {
     autoNews();
     addText("Auto-news has been enabled.");
 }
-function autoNews() {
+function autoNews(force) {
     let msg = getNews();
     if (msg) {
         addText(msg);
-        advanceDays(1)
+        if (force) {
+            advanceDays(1);
+            if (/*have computer*/false) autoNews(true);
+        }
     }
 }
 
@@ -229,42 +235,82 @@ function promNatalie() {
     clothesSelect("prom")
 }
 
+document.getElementById("hangnat").onclick = function() {
+    affection[1]+=0.05
+    clothesSelect("hang")
+}
 let clothesStreak = 0;
 let clothesOccasion;
-function clothesSelect(occasion) {
+function clothesSelect(occasion,quit) {
     document.getElementById("options").style.display="none";
     document.getElementById("natclothes").style.display="block";
+    document.getElementById("natquit").style.display=quit?"block":"none";
     clearInterval(dayInterval);
     clothesOccasion = occasion;
 }
 function hideClothes() {
     document.getElementById("options").style.display="block";
     document.getElementById("natclothes").style.display="none";
-    dayInterval = setInterval(advanceDays,60000,1);
+    dayInterval = setInterval(overTime,2000);
+    if (quit) return;
     clothesStreak++;
-    affection[1]+=0.08+clothesStreak**0.7/150; //streak helps a fairly large amount for garnering affection.
+    affection[1]+=0.08+clothesStreak**0.7/150;
     happiness += 0.04+clothesStreak**0.75/150; //streak is critical for gaining happiness in this manner.
 }
-function clothesFail() { //strict penalties for doing bad. I really want the player to think, especially since I give infinite time.
+function clothesFail(msg) { //strict penalties for doing bad. I really want the player to think, especially since I give infinite time.
+    if (msg) addText('"'+msg+'"');
     money-=2;
-    happiness-=0.2;
-    affection[1]-=0.3;
+    happiness-=0.1;
+    affection[1]-=0.2;
     clothesStreak = 0;
 }
 document.getElementById("natsubmit").onclick = function() {
     let top = document.getElementById("nattop").value;
     let bottom = document.getElementById("natbottom").value;
-    switch (occasion) {
-        case "prom":
-        if (top=="jacket" || top=="turtleneck") {
-            addText("\"Do you know how hot it'd be in there?\"");
-            clothesFail()
+    if (!top || !bottom) {
+        addText("You need to actually select clothes...");
+        return;
+    }
+    switch (clothesOccasion) {
+        case "hang":
+        if (year < 4) {
+            if (top!="sweater"&&top!="croptop") clothesFail("A "+top+" is no good... At least wear fashionable clothes.");
+            else if (bottom!="skirt"&&bottom!="tights"&&bottom!="slacks") clothesFail("Your "+bottom+" doesn't really fit in with society right now.");
+            else {
+                //regular hang activities
+            }
         }
+        else if (year < 7) {
+            if (top!="trenchcoat"&&top!="bustier"&&top!="jumpsuit") clothesFail("That "+top+" is soooooo out of fashion.");
+            else if (bottom!="skirt"&&bottom!="miniskirt") clothesFail("A "+bottom+"? I'd rethink that choice; we're going out in <i>public</i> here!");
+            else {
+                //regular hang activities
+            }
+        } else {
+            if (top!="jacket"&&top!="jumpsuit") clothesFail("I wouldn't use that "+top+" if I were you.");
+            else if (bottom!="miniskirt") clothesFail("It's been this long and you still don't know to not use a "+bottom+"...");
+            else {
+                //regular hang activities
+            }
+        }
+        case "prom":
+        if (top=="jacket" || top=="sweater") {
+            clothesFail("Do you know how hot it'd be in there?")
+            return;
+        }
+        hideClothes();
+        //need to think of a good way to integrate clothing into this. I'm thinking tunic/flared skirt for best results.
         break;
     }
 }
 
-let dayInterval = setInterval(advanceDays,60000,1,true); //automatically advance 1 day every minute. time waits for no one!
+let partDays = 0;
+function overTime() { //automatically advance 1 day every minute. time waits for no one!
+    if (++partDays<30) return;
+    partDays = 0;
+    advanceDays(1,true);
+}
+let dayInterval = setInterval(overTime,2000);
 
 function init() {
     if (achievements[0]) document.getElementById("autonews").style.display = "block"
@@ -273,8 +319,8 @@ function init() {
 }
 
 /*
-having internet -> 2 news/day
-special event (grad party) - 0,180
+[25%] having internet -> 2 news/day
+[50%] special event (grad party) - 0,180
 get a better job -> +1/d passive income, overtime now only takes 1 day
 star wars release lets you watch movie (costs $$)
 
