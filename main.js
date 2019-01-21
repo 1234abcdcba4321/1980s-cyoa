@@ -3,8 +3,9 @@
 let day = 1;
 let year = 0; //time units. The game will advance 1 year every 365 days and the game will end after year 9.
 let happiness = 0; //less happiness will block off options and make the game generally harder.
-let money = 20
-let affection = [0,0]
+let money = 20;
+let affection = [0,0]; //Alex and Natalie.
+let specialEvents = [false,0]; //starwars, better job
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const MONTH_START = [0,31,59,90,120,151,181,212,243,273,304,334];
@@ -16,13 +17,16 @@ function monthDisplay(d) { //convert an amount of days into a month and date
 
 function updateDisplay() {
     document.getElementById("header1").innerHTML = monthDisplay(day)+", 198"+year+"; Happiness: "+happiness+"; Money: "+money+"Bonds: Alex="+affection[0]+" Natalie="+affection[1]
+
     if (affection[1] < -5 || affection[1]/2+happiness < -10) document.getElementById("hangnat").style.display = "none"; //you can't hang out if you aren't close, or you're unhappy!
     else if (affection[1] > 0 || affection[1]/2+happiness > -5) document.getElementById("hangnat").style.display = "block"; //and once you aren't hanging out, it takes a bit to be able to again
+
+    document.getElementById("starwars").style.display = year==3&& day>175&&day<235 &&!specialEvents[0]&& happiness*5>day-200 &&money>2.7?"block":"none"; //2 months because it'd be lame if you missed it
 }
 function advanceDays(days,auto) {
     happiness *= 0.99**days; //you lose 1% of your happiness, whether positive or negative, per day.
-    affection[0] *= 0.995**days; //People's bonds don't last forever. Be careful with them.
-    affection[1] *= 0.995**days;
+    affection[0] *= 0.998**days; //People's bonds don't last forever. Be careful with them.
+    affection[1] *= 0.998**days;
     day += days;
     if (day > 365) { //on day 365, you're onto a new year.
         day -= 365;
@@ -35,6 +39,15 @@ function advanceDays(days,auto) {
         nextEvent++;
         tempEvent[2];
     }
+    if (year>0 && Math.random()>=(0.9999-happiness/100000)**days && !specialEvents[1]) { //40 happiness makes it a 0.05% chance, which i think is reasonable.
+        addText("You see an open spot for a job you could probably get. It pays better than your current one...");
+        specialEvents[1]++;
+        document.getElementById("job").style.display = "block";
+    } else if (specialEvents[1]===2) {
+        money += days/10 //$0.10 per day income, which is actually a lot for this game...
+        happiness -= days/30 //has a downside in that the work is really hard. Minor effect tho
+    }
+
     if (!auto) achCheck[0] = false;
     if (autonews) autoNews(true);
     updateDisplay();
@@ -52,8 +65,9 @@ function addText(text) {
     document.getElementById("body").innerHTML += "<br>"+text;
 }
 document.getElementById("work").onclick = function() {
-    money += 5;
-    advanceDays(2);
+    money += 2;
+    happiness -= 0.05; //missing out on whole days to do work...
+    advanceDays(specialEvents[1]===2 ?1:2);
 }
 
 ///////////////news
@@ -127,7 +141,8 @@ const ACHIEVEMENTS = [ //[name,locked desc,unlocked desc]
     ["Real news","???","Read every news message. Unlocks auto-news, not that you'll need it anymore."],
     ["True idle","Every 60 seconds, one day advances automatically.","Reach the end without passing any days except by idling. Unlocks an advance day button."],
     ["Just plain lucky","You have a 1% chance to get this achievement every time you win.","There's a 0.01% chance to get a secret message when you win!"],
-    ["A code diver","This game is open source.","Well now the rest of the achievements are trivial."]
+    ["A code diver","This game is open source.","Well now the rest of the achievements are trivial."],
+    ["Star Wars party","Three's enough for it to count as a party, right?","Watch Star Wars with both Alex and Natalie together."]
 ]
 document.getElementById("achmenu").onclick = function() {
     const str = ["<br><b>Locked achievements:</b>","<br><br><b>Unlocked achievements:</b>"]
@@ -235,6 +250,40 @@ function promNatalie() {
     clothesSelect("prom")
 }
 
+document.getElementById("starwars").onclick = function() {
+    money -= 2.7; happiness++;
+    specialEvents[0] = true;
+    if (affection[0]<0 && affection[1]<2) {
+        addText("You go to the movie theater. The show was nice, but it'd be better if there was less people.")
+        happiness+=0.5;
+    } else if (affection[0]>30 && affection[1]>32) {
+        addText("You bring both Alex and Natalie to watch Star Wars. They both love it, though Alex critically points out everything bad and Natalie does her best to defend the show because she can't stand someone complaining so much about the minor details of something great (much like she does for clothes).");
+        addText("You enjoyed the show, but most of Alex's points make sense. In the end, you're all looking forward to watching more shows.");
+        giveAchievement(4); //this is the main reward for actually hanging out with both of them.
+        happiness++; affection[0]++; affection[1]++;
+    } else if (affection[0]>affection[1]-2) {
+        addText("You go watch <i>Star Wars: Return of the Jedi</i> with Alex. After the show, he gives a large amount of criticisms about the show.");
+        affection[0]++;
+    } else {
+        addText("This particular episode of Star Wars was better than the last two. Natalie seems to love it too, and won't take anything bad about it.");
+        affection[1]++;
+    }
+    updateDisplay();
+}
+document.getElementById("job").onclick = function() {
+    document.getElementById("job").style.display = "none";
+    addText("You sign up for a new job as a Switchboard Operator.");
+    if (Math.random() > happiness/30+0.3) {
+        addText("However, you didn't make it. Some of the other applicants were just better.");
+        happiness--;
+        specialEvents[1]--;
+        return;
+    }
+    addText("This job will provide you with a small amount of extra cash without needing to work overtime.")
+    specialEvents[1]++;
+}
+
+
 document.getElementById("hangnat").onclick = function() {
     affection[1]+=0.05
     clothesSelect("hang")
@@ -321,8 +370,10 @@ function init() {
 /*
 [25%] having internet -> 2 news/day
 [50%] special event (grad party) - 0,180
-get a better job -> +1/d passive income, overtime now only takes 1 day
+
+done:
 star wars release lets you watch movie (costs $$)
+get a better job -> + passive income, overtime now only takes 1 day
 
 ALEX - tech stuff like computers; game-y minis
 NATALIE - fashion, music, art; trivia-y minis
