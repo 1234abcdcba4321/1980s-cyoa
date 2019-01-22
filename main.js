@@ -5,7 +5,8 @@ let year = 0; //time units. The game will advance 1 year every 365 days and the 
 let happiness = 0; //less happiness will block off options and make the game generally harder.
 let money = 20;
 let affection = [0,0]; //Alex and Natalie.
-let specialEvents = [false,0]; //starwars, better job
+let spAffection = [0,0]; //special - fucking
+let specialEvents = [false,0,false]; //starwars, better job
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const MONTH_START = [0,31,59,90,120,151,181,212,243,273,304,334];
@@ -25,8 +26,8 @@ function updateDisplay() {
 }
 function advanceDays(days,auto) {
     happiness *= 0.99**days; //you lose 1% of your happiness, whether positive or negative, per day.
-    affection[0] *= 0.998**days; //People's bonds don't last forever. Be careful with them.
-    affection[1] *= 0.998**days;
+    if (!spAffection[0]) affection[0] *= 0.998**days; //People's bonds don't last forever. Be careful with them.
+    if (!spAffection[1]) affection[1] *= 0.998**days; //But they will remain if you've fucked.
     day += days;
     if (day > 365) { //on day 365, you're onto a new year.
         day -= 365;
@@ -78,7 +79,7 @@ document.getElementById("newsbtn").onclick = function(force) {
     if (msg) {
         if (!force) advanceDays(1);
         addText(msg);
-        if (/*have computer*/false && !force) document.getElementById("newsbtn").onclick(true);
+        if (specialEvents[2] && !force) document.getElementById("newsbtn").onclick(true);
     } else {
         if (newsRead[9].includes(newsRead[9].length-1)) giveAchievement(0);
         addText("There is no news left for you to read.");
@@ -86,9 +87,7 @@ document.getElementById("newsbtn").onclick = function(force) {
 }
 let autonews = false;
 document.getElementById("autonews").onclick = function() {
-    if (year>0) {
-        if (!confirm("Are you sure you would like to enable auto-news? It will skip a lot of days!")) return;
-    }
+    if (year>0 && !confirm("Are you sure you would like to enable auto-news? It will skip a lot of days!")) return;
     autonews=true;
     document.getElementById("autonews").style.display="none";
     autoNews();
@@ -100,7 +99,7 @@ function autoNews(force) {
         addText(msg);
         if (force) {
             advanceDays(1);
-            if (/*have computer*/false) autoNews(true);
+            if (specialEvents[2]) autoNews(false);
         }
     }
 }
@@ -142,7 +141,9 @@ const ACHIEVEMENTS = [ //[name,locked desc,unlocked desc]
     ["True idle","Every 60 seconds, one day advances automatically.","Reach the end without passing any days except by idling. Unlocks an advance day button."],
     ["Just plain lucky","You have a 1% chance to get this achievement every time you win.","There's a 0.01% chance to get a secret message when you win!"],
     ["A code diver","This game is open source.","Well now the rest of the achievements are trivial."],
-    ["Star Wars party","Three's enough for it to count as a party, right?","Watch Star Wars with both Alex and Natalie together."]
+    ["Star Wars party","Three's enough for it to count as a party, right?","Watch Star Wars with both Alex and Natalie together."],
+    ["Money sharer","What better to do with money than to share it?","Give out a lot of money to Natalie and her friends."],
+    ["Extreme Intimacy","If you do it enough, the novelty goes away and it's more of a routine.","Have sex with either character 5 times."]
 ]
 document.getElementById("achmenu").onclick = function() {
     const str = ["<br><b>Locked achievements:</b>","<br><br><b>Unlocked achievements:</b>"]
@@ -165,8 +166,7 @@ document.getElementById("miscinfo").onclick = function() {
 }
 
 let nextEvent = 0;
-const EVENTS = [[0,180,prom()]];
-function prom() {
+const EVENTS = [ [0,180,function() {
     if (happiness < -10) addText("Prom is today. You don't really feel like going.");
     else if (affection[0]-5 > affection[1]) {
         if (confirm("Alex invited you to prom. Would you like to go?")) promAlex();
@@ -209,7 +209,8 @@ function prom() {
         }
     }
     advanceDays(1);
-}
+}]
+];
 function promAlex() {
     happiness += 2;
     let spiked = true;
@@ -291,16 +292,14 @@ document.getElementById("hangnat").onclick = function() {
 let clothesStreak = 0;
 let clothesOccasion;
 function clothesSelect(occasion,quit) {
-    document.getElementById("options").style.display="none";
+    pauseWorld()
     document.getElementById("natclothes").style.display="block";
     document.getElementById("natquit").style.display=quit?"block":"none";
-    clearInterval(dayInterval);
     clothesOccasion = occasion;
 }
 function hideClothes() {
-    document.getElementById("options").style.display="block";
+    unpauseWorld()
     document.getElementById("natclothes").style.display="none";
-    dayInterval = setInterval(overTime,2000);
     if (quit) return;
     clothesStreak++;
     affection[1]+=0.08+clothesStreak**0.7/150;
@@ -325,22 +324,16 @@ document.getElementById("natsubmit").onclick = function() {
         if (year < 4) {
             if (top!="sweater"&&top!="croptop") clothesFail("A "+top+" is no good... At least wear fashionable clothes.");
             else if (bottom!="skirt"&&bottom!="tights"&&bottom!="slacks") clothesFail("Your "+bottom+" doesn't really fit in with society right now.");
-            else {
-                //regular hang activities
-            }
+            else natHang(top,bottom);
         }
         else if (year < 7) {
             if (top!="trenchcoat"&&top!="bustier"&&top!="jumpsuit") clothesFail("That "+top+" is soooooo out of fashion.");
             else if (bottom!="skirt"&&bottom!="miniskirt") clothesFail("A "+bottom+"? I'd rethink that choice; we're going out in <i>public</i> here!");
-            else {
-                //regular hang activities
-            }
+            else natHang(top,bottom);
         } else {
             if (top!="jacket"&&top!="jumpsuit") clothesFail("I wouldn't use that "+top+" if I were you.");
             else if (bottom!="miniskirt") clothesFail("It's been this long and you still don't know to not use a "+bottom+"...");
-            else {
-                //regular hang activities
-            }
+            else natHang(top,bottom);
         }
         case "prom":
         if (top=="jacket" || top=="sweater") {
@@ -352,6 +345,140 @@ document.getElementById("natsubmit").onclick = function() {
         break;
     }
 }
+function natHang(top,bottom) {
+    const options = ["chat"];
+    if (Math.random() < 0.5) {
+        if (Math.random()*money > 10) options.push("shop");
+        if (day > 140 && day < 270) {
+            if (affection[1] > 10) options.push("pool");
+            if (Math.random()+1 < money/2) options.push("beach");
+        } else if (day < 90) options.push("winter")
+        if (affection[1]+spAffection[1]+Math.random()*10 > 45-year && top!="trenchcoat"&&top!="jacket") options.push("fuck");
+    }
+    switch (options[Math.floor(Math.random()*options.length)]) {
+        case "chat":
+        advanceDays(7);
+        addText("You chat with Natalie and her other friends for a while.");
+        switch (Math.floor(Math.random()*5)) {
+            case 0:
+            addText("Today was an especially fun day. Why is it that politics isn't normally a thing you're allowed to talk about? Other than the massive disagreements between people, of course...");
+            happiness++; affection[1]-=0.25;
+            break; case 1:
+            addText("The recent drama around school and work varies between all the people. But in the end, they all have the same kind of theme.");
+            happiness++; affection[1]+=2;
+            break; case 2:
+            addText("Your throat hurts. Probably shouldn't laugh so much, next time.");
+            happiness+=2; affection[1]+=2;
+            break; case 3:
+            addText("These people are really bad at some things. That's fine though, since you are too.");
+            happiness-=0.25; affection[1]+=2;
+            break; case 4:
+            addText("No matter how long you go, it seems like you never run out of conversation topics.");
+            affection[1]++;
+            advanceDays(7);
+        };
+        break; case "shop":
+        advanceDays(7);
+        addText("You go shopping with Natalie and her other friends. There's a lot to buy!");
+        switch (Math.floor(Math.random()*5)) {
+            case 0:
+            if (specialEvents[2]) {
+                addText("You didn't find anything of value to buy, so you just went to chat instead.");
+                affection[1]+=0.25; return;
+            }
+            alert("You come upon a $120 laptop while shopping. It would be pretty useful for keeping up with news, though it's a little expensive...")
+            if (money >= 120) {
+                if (confirm("Would you like to buy it?")) {
+                    money -= 120; happiness++; affection[1]--;
+                    specialEvents[2] = true;
+                } else addText("There isn't much else to buy.");
+            } else if (money + affection[0]*2 > 120) {
+                if (confirm("But since you're poor, Natalie could supply a bit of money for you to get it.")) {
+                    affection[1]-=12-money/5; money=0;
+                    specialEvents[2] = true;
+                } else addText("There isn't much else to buy.");
+            } else addText("However, you can't afford it, and there's nothing else to buy.");
+            break; case 1:
+            addText("You go clothes shopping. Natalie is as stingy as always with your clothes. In the end, you spend $10 on what seems like good clothes.");
+            money-=10; affection[1]+=2;
+            break; case 2:
+            addText("The food at this mall is good, but Natalie really loves it more than what seems healthy.");
+            money-=10; happiness+=2; affection[1]+=2;
+            break; case 3:
+            addText("Natalie has some weird preferences for things sometimes. She tells you why when you ask, but so many of them are weird enough that they feel like excuses for her to expand her collection.");
+            affection[1]+=6;
+            break; case 4:
+            addText("You accidentally stay for a little too long. These deals are so great, even though you repeatedly tell the group that a 15% sale is really insignificant...");
+            if (money > 80) {
+                addText("You're sorta rich, and you managed to get everything the group wanted. It costed $80 in total.");
+                giveAchievement(5)
+                affection[1]+=13; happiness+=8; money-=80; //13 lmao
+            } else if (money > 35) {
+                addText("You actually spent all of your money though, and even gave away $"+money-35+" to buy what the group wanted, too.");
+                affection[1]+=money/5-7; happiness+=7; money=0;
+            } else {
+                addText("Due to how little money you have, you weren't really able to buy everything you wanted; though it was still fun.");
+                happiness+=money/5; money=0;
+            }
+            advanceDays(7);
+        };
+        break; case "pool":
+        advanceDays(7);
+        addText("One of Natalie's friends have a pool. You can use it to play around.");
+        let alex = false;
+        if (Math.random()*40 < affection[0]-5) {
+            addText("Alex is around too. He's fine with hanging out with the group.");
+            affection[0]++; affection[1]--; happiness++;
+            alex = true;
+        }
+        if (Math.random() < 0.5) {
+            addText("Today was a little hot, but time spent in the pool is always full of laughing and getting splashed a lot.");
+            affection[1]++; happiness+=4;
+        } else if (alex) {
+            addText("Alex was actually a nice addition to the group. He managed to win a lot of these games, as he takes them extremely seriously.");
+            affection[0]++; happiness+=2;
+        } else {
+            addText("Things worked out around how you'd expect it to. It's easy to accidentally hurt someone!");
+            happiness--;
+        }
+        break; case "beach":
+        advanceDays(14); //I need something that lasts longer :/
+        money -= 2; happiness+=3;
+        addText("Today seems like a good day to go out somewhere farther from home than usual.");
+        let alex = false;
+        if (Math.random()*40 < affection[0]-5) {
+            addText("Alex is around too. He's fine with hanging out with the group.");
+            affection[0]++; happiness++;
+            alex = true;
+        }
+        if (Math.random() < 0.1) {
+            addText("More time was spent building an extremely sophisticated sandcastle than anything else.");
+            affection[1]+=6; happiness+=3; if (alex) affection[0]+=3;
+            advanceDays(7);
+        } else if (alex && Math.random() < 0.5) {
+            addText("Even though it's the middle of summer, it was pretty cold. Yet with how active you were through that day, it was good that it was.");
+            affection[0]+=3; affection[1]+=3;
+        } else addText("Today went pretty well. Some of Natalie's friends went out at some point to get some ice cream or something.");
+        break; case "winter":
+        advanceDays(7);
+        addText("Natalie had the idea to play around in the snow. It went the same as always - making shapes in the snow, and sculptures too.");
+        happiness++; affection[1]++;
+        break; case "fuck":
+        advanceDays(3)
+        spAffection[1]++;
+        happiness+=4;
+        if (spAffection==1) {
+            addText("Since you're both of age, you wanted to try something very intimate. It's not ideal and it definitely should stay secret, but you're too far in now to ever back out.");
+            addText("This is the sort of event that neither of you will really ever forget.");
+            happiness+=4; affection[1]+=4;
+        }
+        else if (spAffection[1]<5) addText("You try sex again. It's kind of like last time, but each time you try to add something new, so it ends up being different.");
+        else {
+            addText("You've been having sex a lot lately. You're glad it's part of your normal hangout repetroir.");
+            giveAchievement(6);
+        }
+    }
+}
 
 let partDays = 0;
 function overTime() { //automatically advance 1 day every minute. time waits for no one!
@@ -360,6 +487,14 @@ function overTime() { //automatically advance 1 day every minute. time waits for
     advanceDays(1,true);
 }
 let dayInterval = setInterval(overTime,2000);
+function pauseWorld() {
+    document.getElementById("options").style.display="none";
+    clearInterval(dayInterval);
+}
+function unpauseWorld() {
+    document.getElementById("options").style.display="block";
+    dayInterval = setInterval(overTime,2000);
+}
 
 function init() {
     if (achievements[0]) document.getElementById("autonews").style.display = "block"
