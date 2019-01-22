@@ -287,7 +287,7 @@ document.getElementById("job").onclick = function() {
 
 document.getElementById("hangnat").onclick = function() {
     affection[1]+=0.05
-    clothesSelect("hang")
+    clothesSelect("hang",true)
 }
 let clothesStreak = 0;
 let clothesOccasion;
@@ -341,7 +341,57 @@ document.getElementById("natsubmit").onclick = function() {
             return;
         }
         hideClothes();
-        //need to think of a good way to integrate clothing into this. I'm thinking tunic/flared skirt for best results.
+        let clothesPoints = 0;
+        switch (top) {
+            case "croptop": clothesPoints++;
+            case "bustier": clothesPoints++;
+            case "jumpsuit": clothesPoints++;
+        }
+        switch (bottom) {
+            case "dress": clothesPoints++;
+            case "skirt": clothesPoints++;
+            case "miniskirt": clothesPoints++;
+        }
+        if (clothesPoints==6) {
+            addText("People are really complimenting you on your clothes. You almost feel like you fit in!");
+            addText("Natalie admits that she'd be less willing to do stuff if you were wearing something less proper.");
+            affection[1]++; happiness++;
+        } else if (clothesPoints > 3) {
+            addText("After you show up, you see all of the weird outfits people came in and how they're treated slightly differently than the ones that wear expected clothes.");
+            addText("You still fit in well enough though, especially as Natalie is here to help keep up appearances.")
+            affection[1]+=1.5;
+        } else if (clothesPoints > 1) {
+            addText("Right when you enter, you realize how much more streamlined the majority of the room's clothes are. Natalie was nice enough to wear the same things you did, though!");
+            affection[1]+=2; happiness--;
+        } else {
+            addText("You look... bad. Being unique is usually celebrated, but it's always better to follow trends than to try to set a new one.");
+            happiness--;
+        }
+        if (Math.random() > 0.5) {
+            if (affection[0] > 10) {
+                addText("You catch some people (including Alex) spiking the punch. You're not sure if they'll be successful, so you just help them out.");
+                affection[0]++;
+            } else {
+                addText("You catch some people spiking the punch. Oh well; guess you're not having any now.");
+                happiness--;
+            }
+        } else {
+            addText("You go get a non-alchholic drink with Natalie, but don't realize that the punch has been spiked. You catch yourself fairly quickly, and just get out.");
+            if (affection[1]/10 > 0.5+Math.random()) {
+                addText("You pull Natalie out too. She seems to have been taken hard by it... Has she even drunk before?");
+                affection[1]+=3; happiness--;
+            } else if (Math.random() < 0.4) {
+                if (affection[0] > 5) {
+                    addText("Alex told you later that Natalie might've gotten seriously hurt in there if he didn't use his influence to stop people.");
+                    affection[0]++; affection[1]--; happiness--;
+                }
+                addText("After, you learned that Natalie was absolutely not okay in there, and that you should've been a better friend.");
+                affection[1]-=3; happiness-=3;
+            } else {
+                addText("You left Natalie alone, but she seems to have not suffered excessive losses. There were better people for the guys to flirt with, anyway.");
+                affection[1]-=2;
+            }
+        }
         break;
     }
 }
