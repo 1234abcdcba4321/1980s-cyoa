@@ -6,7 +6,7 @@ let happiness = 0; //less happiness will block off options and make the game gen
 let money = 20;
 let affection = [0,0]; //Alex and Natalie.
 let spAffection = [0,0]; //special - fucking
-let specialEvents = [false,0,false]; //starwars, better job
+let specialEvents = [false,0,false,0];
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const MONTH_START = [0,31,59,90,120,151,181,212,243,273,304,334];
@@ -26,8 +26,8 @@ function updateDisplay() {
 }
 function advanceDays(days,auto) {
     happiness *= 0.99**days; //you lose 1% of your happiness, whether positive or negative, per day.
-    if (!spAffection[0]) affection[0] *= 0.998**days; //People's bonds don't last forever. Be careful with them.
-    if (!spAffection[1]) affection[1] *= 0.998**days; //But they will remain if you've fucked.
+    affection[0] *= 0.998**days; //People's bonds don't last forever. Be careful with them.
+    affection[1] *= 0.998**days;
     day += days;
     if (day > 365) { //on day 365, you're onto a new year.
         day -= 365;
@@ -55,11 +55,48 @@ function advanceDays(days,auto) {
 }
 function gameEnd() { //the end of the game.
     if (achCheck[0]) giveAchievement(1);
+    document.getElementById("header").style.display = "none"
+    pauseWorld()
+
+    addText("<hr><b>1990 - The End!</b>");
     if (Math.random() < 0.01) {
         giveAchievement(2);
         if (Math.random() < 0.01) addText("You're truly lucky! Have some lucky numbers: "+Math.random()+" "+Math.random()+" "+Math.random())
     }
-    document.getElementById("header").style.display = "none"
+    addText("Over the 10 years, you've done plenty. Here's the outcome of your journey...<br>");
+    if (spAffection[1] > 3+spAffection[0] && affection[1] > 45) { //partner with Nat
+        if (spAffection[0]) {
+            addText("There's some lingering regrets from your sex with Alex, and eventually it got out.");
+            if ((affection[1]-affection[0])/10 > 8+spAffection[0]) addText("Despite this, Natalie is willing to accept that you've left Alex and that was just a regret from long ago.");
+            else addText("This isn't enough to make Natalie leave you, but you can tell that she's not happy about this.")
+        } else addText("You continued your relationship. It went well into the end of life. Natalie even produced some children, in the end.");
+    } else if (spAffection[0] > 3+spAffection[1] && affection[0] > 45) { //partner with Alex
+        if (spAffection[1]) {
+            addText("Alex dug at some point and found your sex with Natalie.");
+            if ((affection[0]-affection[1])/10 > 8+spAffection[1]) addText("He doesn't really care, since you don't seem to be fucking her anymore.");
+            else addText("He just wants to make sure you don't plan on cheating on him, not that you do.");
+        } else addText("You continued your life as it would go normally. Alex really loves you, and you love him.");
+    } else if (affection[0] + affection[1] < 10) { //loner - not with either
+        addText("You became a loner, who isn't very capable of going out in public.");
+        if (spAffection[0]&&spAffection[1]) addText("You'd rather bait people to try to get them to do what you want. It works, but it's not really friendship.");
+        else if (spAffection[0]||spAffection[1]) addText("While you've had some success in the past, you've been unable to replicate the highs of youth.");
+        else if (happiness > 15) addText("However, your joys in life involve solitude. You don't really need anyone else to make you happy.");
+        else addText("You're not really sure if there's a reason to keep doing what you are. You really need to figure out how to talk to people.");
+    } else if (spAffection[0] > 3 && spAffection[1] > 3 && affection[0] > 45 && affection[1] > 45) { //partner with both!
+        addText("You end up in a weird state where you love two people, but marrying two people is illegal.");
+        addText("What wasn't obvious before was that both Alex and Natalie ended up loving each other too, forming a proper love triangle."); //reddit post - traditional love triangles are angles, not triangles
+        addText("Life went about as well as it could be when having three people in a relationship.");
+        giveAchievement(8);
+    } else if (spAffection[1]+spAffection[0] > 6) addText("You aren't really sure who you want to be with, but you know it's one of those two. It's time to make a choice.")
+    else if (spAffection[1]&&spAffection[0]) addText("While you've fucked people before, you're constantly on the path of finding new people for a quick night stand. This method works, as you've never really been able to get a long-term relationship.")
+    else if (!spAffection[1] && (spAffection[0] || affection[0]-10 > affection[1])) addText("You're fresh new into your relationship with Alex. Who knows how it'll turn out?");
+    else if (spAffection[1] || affection[1]-10 > affection[0]) addText("What's in store for the future? Only time will tell. Write your fanfictions now.");
+    else addText("You've managed to take a nearly equal liking to both of them.")
+    addText("<br>You finished with "+affection[0]+" points for Alex and "+affection[1]+" points for Natalie. Your game skill with Alex's competition is "+alexGameSkill+" and you won "+specialEvents[3]+" times.");
+    addText("You have a streak of "+alexStreak+ "for picking what Alex wants to do next, and a streak of "+clothesStreak+" for picking the right clothes.");
+    if (spAffection[0]&&spAffection[1]) addText("You fucked Alex "+spAffection[0]+" times and Natalie "+spAffection[1]+" times.");
+    else if (spAffection[0]||spAffection[1]) addText("You fucked "+spAffection[0]? "Alex ":"Natalie "+Math.max(spAffection[0],spAffection[1]) +" times.")
+    addText("<hr>To play again and take a different path, refresh the page! The game will save any achievements you've gotten.")
 }
 function addText(text) {
     if (!text) return false;
@@ -137,13 +174,15 @@ function giveAchievement(id) {
     localStorage.setItem("1980achievements",JSON.stringify(achievements));
 }
 const ACHIEVEMENTS = [ //[name,locked desc,unlocked desc]
-    ["Real news","???","Read every news message. Unlocks auto-news, not that you'll need it anymore."],
+    ["Real news","The achievement name is a reference to <i>Antimatter Dimensions</i> (2017).","Read every news message. Unlocks auto-news, not that you'll need it anymore."],
     ["True idle","Every 60 seconds, one day advances automatically.","Reach the end without passing any days except by idling. Unlocks an advance day button."],
     ["Just plain lucky","You have a 1% chance to get this achievement every time you win.","There's a 0.01% chance to get a secret message when you win!"],
     ["A code diver","This game is open source.","Well now the rest of the achievements are trivial."],
     ["Star Wars party","Three's enough for it to count as a party, right?","Watch Star Wars with both Alex and Natalie together."],
     ["Money sharer","What better to do with money than to share it?","Give out a lot of money to Natalie and her friends."],
-    ["Extreme Intimacy","If you do it enough, the novelty goes away and it's more of a routine.","Have sex with either character 5 times."]
+    ["Extreme Intimacy","If you do it enough, the novelty goes away and it's more of a routine.","Have sex with either character 5 times."],
+    ["Game Master","Just get really good at games.","Beat Alex 10 times in the professional game."],
+    ["Love Triangle","Create a proper love triangle.","Get the best ending."]
 ]
 document.getElementById("achmenu").onclick = function() {
     const str = ["<br><b>Locked achievements:</b>","<br><br><b>Unlocked achievements:</b>"]
@@ -284,6 +323,212 @@ document.getElementById("job").onclick = function() {
     specialEvents[1]++;
 }
 
+let alexStreak = 0;
+let alexNext = "chat";
+function alexAction(choice) {
+    let ret = alexNext===choice;
+    if (alexNext !== choice) {
+        addText("Alex tells you that he wanted to <b>"+alexNext+"</b> instead, but will still go along with your offer.");
+        happiness--; affection[0]--;
+        alexStreak = 0;
+    } else {
+        alexStreak++;
+        affection[0]+=Math.min(alexStreak,4*alexStreak**0.7)/300; //real nice ^1 scaling so that if you continuously hang out how Alex wants you can actually get somewhere... to an extent.
+    }
+    unpauseWorld();
+    document.getElementById("alexselect").style.display="none";
+    alexNext = "chat";
+    return ret;
+}
+document.getElementById("hangalex").onclick = function() {
+    affection[0]+=0.05
+    pauseWorld()
+    document.getElementById("alexselect").style.display="block";
+}
+document.getElementById("alexchat").onclick = function() {
+    advanceDays(4); //shorter than Nat since these are really just here to enable a different action
+    alexAction("chat")
+    addText("You talk with Alex about games and life.");
+    switch (Math.floor(Math.random()*5)) {
+        case 0: addText("Alex is criticizing some things in your last games, and helping you improve. He seems to want to just keep talking about random things, and not much really shows up.");
+        break; case 1:
+        addText("At some point, Alex challenges you to a game. It's a tempting offer.");
+        alexNext = "compete";
+        break; case 2:
+        addText("Alex was looking at advertisements and found something he wants. It could be nice to go out with him.");
+        alexNext = "shop";
+        break; case 3:
+        addText("Alex expresses interest in playing some more board games.");
+        alexNext = "play";
+        break; case 4:
+        if (spAffection[0]) {
+            addText("Alex definitely wants to have sex again. He's not even hiding it.");
+            alexNext = "fuck";
+        } else if (affection[0] > 40) {
+            addText("Alex brings up the prospect of having sex. It might actually be a good idea...")
+            document.getElementById("alexFuck").style.display = "block";
+            alexNext = "fuck";
+        } else addText("Things are good.");
+    }
+}
+document.getElementById("alexhome").onclick = function() {
+    advanceDays(4);
+    alexAction("play");
+    switch (Math.floor(Math.random()*3)) {
+        case 0:
+        addText("You have a chess tournament with Alex. You're both bad.");
+        if (happiness < Math.min(year,affection[0])) {
+            addText("Alex notices that you're a little out of it, so he makes it quite a bit easier... but you end up still losing.");
+            happiness-=3; affection[0]++;
+        } else if (Math.random()*40+year > happiness) {
+            addText("But Alex seems to have beat you. It was close!");
+            happiness--; affection[0]++;
+        } else if (Math.random()*50+year > happiness) {
+            addText("And you won the tournament, fair and square.");
+            happiness++;
+        } else {
+            addText("Actually, you were doing really well. Or he was out of it. You're not too sure.");
+            affection[0]+=2;
+        }
+        break; case 1:
+        addText("You two have a go at your favorite quiz shows. Alex is very good in some categories but is hopeless in everything else.");
+        if (Math.random() < 1/3) {
+            addText("Many of the questions were in Alex's speciality.");
+            if (affection[0] > 60 && affection[0]/2+happiness > 60) {
+                addText("But having spent so much time with him, you were able to compete. Still lost, but you're getting there.");
+                happiness+=3;
+            } else addText("He's really good at this, so you got blown out of the water. Hopefully you get more lucky next time.");
+            affection[0]+=2;
+        } else if (Math.random() < 0.5) {
+            if (affection[1] > 5) addText("Many of the questions seemed like the thing Natalie would be into. If only she were here...");
+            else addText("Many of the questions seemed to fit what the girls are into a bit more.");
+            if (affection[1] > Math.random()*15 && happiness > Math.random()*15) {
+                addText("You didn't do amazingly, but you don't need to do amazingly to beat someone who's more clueless than you are. What you learned from Natalie was really helpful.");
+                happiness+=2; affection[1]++;
+            } else {
+                addText("You both did super terribly, and it was only a stroke of luck that you ended up with a draw. Alex asks for a rematch.");
+                happiness-=2;
+                alexNext = "play";
+            }
+        } else {
+            addText("The questions were balanced, which led to the challenges being a true test of resolve.");
+            affection[0]--;
+            if (happiness > Math.random()*60) {
+                addText("You managed to win, though. This contest was really tough.")
+                happiness++;
+            } else if (happiness+5 < Math.random()*(year+5)) {
+                addText("Alex realizes that you're fairly out of it and aggressively asks you to get back in.")
+                happiness-=3; affection[0]-=3;
+            } else {
+                addText("Alex barely won. Maybe next time.")
+                happiness--;
+            }
+        }
+        break; case 2:
+        advanceDays(3+Math.floor(Math.random()*15)) //min 7 days, max 21 :D
+        addText("The game is completely about the dice. It's time for a frustrating game of Monopoly with Alex and friends!");
+        let nat = false;
+        if (affection[1] > 25) {
+            addText("You invited Natalie, too.");
+            nat = true;
+        }
+        if (Math.random() < 0.125) {
+            addText("You won. That took way too long.")
+            happiness++;
+        } else if (Math.random() < 1/7) {
+            addText("Alex won. Why does Monopoly take so long?");
+            happiness-=0.25; affection[0]+=0.5;
+        } else if (Math.random() < 1/6) {
+            addText("John won. It turns out that John is a sore winner and likes to ruin everyone's experience...");
+            happiness--;
+            if (nat) affection[1]--;
+        } else if (nat && Math.random() < 1/5) {
+            addText("Natalie doesn't actually like games like this that much, but she ended up winning...");
+            affection[1]++;
+        } else addText("The game was pretty boring, though you did manage to make second place.");
+    }
+}
+
+document.getElementById("alexshop").onclick = function() {
+    advanceDays(4);
+    alexAction("shop");
+    addText("Alex goes to buy something random that he saw was available, mostly ignoring what you need. Which gives you time to buy what you want yourself.");
+    if (money-11 < Math.random()*20) {
+        addText("Too bad there's not much you want to buy. Why does he always ditch like this?");
+        happiness--;
+    } else {
+        addText("You find things to buy while Alex is doing his own thing. In the end, it costs $5.")
+        money-=5;
+        if (affection[1] > 10) {
+            addText("Later, you give Natalie the present you bought. She likes it!");
+            affection[1]+=2.5;
+        }
+    }
+    addText("Later, Alex offers to buy some food before going into the arcade. It's pretty standard, so of course you're going.");
+    if (money < 6) {
+        addText("Due to your poorness, Alex is willing to cover the costs of what will be your hardcore gaming session.");
+        affection[0]-=money/10; happiness-=money/20; money=6;
+    }
+    addText("It goes the same as normal. You end up using a total of $6 for everything that happens.");
+    affection[0]+=2; happiness++; money-=6;
+    if (alexGameSkill < 25) alexGameSkill+=(25-alexGameSkill)/25;
+}
+
+let alexGameSkill = 0;
+document.getElementById("alexcompete").onclick = function() {
+    advanceDays(7);
+    alexAction("compete");
+    addText("You crowd around Alex's TV in order to do some pro challenges.");
+    if (alexGameSkill < 10) {
+        addText("Alex is amazing at games and you're less so, but you're definitely getting there.");
+        addText("You really just don't stand a chance, so instead he uses this opportunity to help you get better at the game.");
+        affection[0]++; happiness-=2;
+        alexGameSkill+=Math.random()*4;
+    } else if (alexGameSkill < 25) {
+        addText("You're getting better at the game, so it's harder for Alex to keep training you. You actually manage to win in the little challenges sometimes!");
+        affection[0]+=0.5;
+        alexGameSkill+=Math.random()*5;
+    } else if (alexGameSkill+happiness < 75+specialEvents[3]*3+Math.random()*100) {
+        addText("You actually managed to hold your own against Alex, somehow. He doesn't go easy, but now that you won you don't need to get trained any longer~!");
+        happiness+=3; affection[0]++;
+        if (!specialEvents[3]) {happiness+=3; affection[0]+=3; affection[1]-=3}
+        alexGameSkill+=Math.random()*5;
+        specialEvents[3]++;
+        if (specialEvents[3] > 10) giveAchievement(7);
+    } else if (specialEvents[3]) {
+        addText("You lost, but Alex just tells you to keep trying until you win again.");
+        happiness--; affection[0]++;
+        alexGameSkill+=Math.random()*3;
+    } else {
+        addText("While Alex thinks you should be capable of beating him by now, you still lose and so he teaches you some more tricks.");
+        affection[0]+=1.5; happiness-=2;
+        alexGameSkill+=Math.random()*5;
+    }
+}
+
+document.getElementById("alexfuck").onclick = function() {
+    if (alexAction("fuck")) {
+        addText("It's a bit better than normal since Alex wanted to do it for a while beforehand.")
+        affection[0]++; happiness++;
+    }
+    spAffection[0]++;
+    happiness+=2;
+    if (spAffection[0]==1) {
+        addText("Having sex isn't too foreign of a concept, but it's something that's in the path of things to do.");
+        affection[0]+=4; happiness+=4;
+        if (spAffection[1]) {
+            addText("Natalie's sex doesn't get mentioned here. The longer you can delay them finding out, the better...?");
+            affection[1]-=4;
+        }
+    } else if (spAffection[0] < 5) {
+        addText("Sex is basically the same as it always is by now, since you did everything this way the first time too.");
+        affection[1]+=2;
+    }
+    else {
+        addText("Just another day.")
+        giveAchievement(6)
+    }
+}
 
 document.getElementById("hangnat").onclick = function() {
     affection[1]+=0.05
@@ -302,14 +547,14 @@ function hideClothes() {
     document.getElementById("natclothes").style.display="none";
     if (quit) return;
     clothesStreak++;
-    affection[1]+=0.08+clothesStreak**0.7/150;
-    happiness += 0.04+clothesStreak**0.75/150; //streak is critical for gaining happiness in this manner.
+    affection[1]+=0.06+clothesStreak**0.7/250;
+    happiness += 0.03+clothesStreak**0.75/250; //streak is critical for gaining happiness in this manner.
 }
 function clothesFail(msg) { //strict penalties for doing bad. I really want the player to think, especially since I give infinite time.
     if (msg) addText('"'+msg+'"');
     money-=2;
-    happiness-=0.1;
-    affection[1]-=0.2;
+    happiness-=0.4;
+    affection[1]--;
     clothesStreak = 0;
 }
 document.getElementById("natsubmit").onclick = function() {
@@ -517,10 +762,13 @@ function natHang(top,bottom) {
         advanceDays(3)
         spAffection[1]++;
         happiness+=4;
-        if (spAffection==1) {
+        if (spAffection[1]==1) {
             addText("Since you're both of age, you wanted to try something very intimate. It's not ideal and it definitely should stay secret, but you're too far in now to ever back out.");
             addText("This is the sort of event that neither of you will really ever forget.");
-            happiness+=4; affection[1]+=4;
+            if (spAffection[0]) {
+                addText("You don't tell her about your affairs with Alex. It'd be easier to ignore them, if anything.");
+                happiness-=2; affection[0]-=4;
+            } else happiness+=4; affection[1]+=4;
         }
         else if (spAffection[1]<5) addText("You try sex again. It's kind of like last time, but each time you try to add something new, so it ends up being different.");
         else {
