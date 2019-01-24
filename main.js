@@ -17,8 +17,22 @@ function monthDisplay(d) { //convert an amount of days into a month and date
 }
 
 function updateDisplay() {
-    document.getElementById("header1").innerHTML = monthDisplay(day)+", 198"+year+"; Happiness: "+happiness+"; Money: "+money+"Bonds: Alex="+affection[0]+" Natalie="+affection[1]
+    let happyDisplay;
+    if (happiness < -35) happyDisplay = "Extremelyer sad-" +(-happiness-35)
+    else if (happiness < -20) happyDisplay = "Extremely sad"
+    else if (happiness < -10) happyDisplay = "Very sad"
+    else if (happiness < -3) happyDisplay = "Sad"
+    else if (happiness < 5) happyDisplay = "Neutral"
+    else if (happiness < 15) happyDisplay = "Happy"
+    else if (happiness < 25) happyDisplay = "Very happy"
+    else if (happiness < 40) happyDisplay = "Extremely happy"
+    else if (happiness < 60) happyDisplay = "Extremelyer happy"
+    else if (happiness < 85) happyDisplay = "Extremelyerest happy" + happiness > 70? "+"+happiness-70 :""
+    else happyDisplay = "Extremelyerester happy+" +happiness-85 
+    document.getElementById("header1").innerHTML = monthDisplay(day)+", 198"+year+"; Mood: "+happyDisplay+"; Money: $"+money;
 
+    if (affection[0] < -5 || affection[0]/2+happiness < -10) document.getElementById("hangalex").style.display = "none";
+    else if (affection[0] > 0 || affection[0]/2+happiness > -5) document.getElementById("hangalex").style.display = "block";
     if (affection[1] < -5 || affection[1]/2+happiness < -10) document.getElementById("hangnat").style.display = "none"; //you can't hang out if you aren't close, or you're unhappy!
     else if (affection[1] > 0 || affection[1]/2+happiness > -5) document.getElementById("hangnat").style.display = "block"; //and once you aren't hanging out, it takes a bit to be able to again
 
@@ -114,9 +128,9 @@ const newsRead = [[],[],[],[],[],[],[],[],[],[]];
 document.getElementById("newsbtn").onclick = function(force) {
     const msg = getNews();
     if (msg) {
-        if (!force) advanceDays(1);
+        if (force) advanceDays(1);
         addText(msg);
-        if (specialEvents[2] && !force) document.getElementById("newsbtn").onclick(true);
+        if (specialEvents[2] && !force) document.getElementById("newsbtn").onclick(false); //apparently clicking the button returns an object
     } else {
         if (newsRead[9].includes(newsRead[9].length-1)) giveAchievement(0);
         addText("There is no news left for you to read.");
@@ -248,8 +262,9 @@ const EVENTS = [ [0,180,function() {
         }
     }
     advanceDays(1);
-}]
-];
+}],
+[11,0,0] ];//filler to prevent it from breaking
+
 function promAlex() {
     happiness += 2;
     let spiked = true;
@@ -370,6 +385,7 @@ document.getElementById("alexchat").onclick = function() {
             alexNext = "fuck";
         } else addText("Things are good.");
     }
+    updateDisplay();
 }
 document.getElementById("alexhome").onclick = function() {
     advanceDays(4);
@@ -447,6 +463,7 @@ document.getElementById("alexhome").onclick = function() {
             affection[1]++;
         } else addText("The game was pretty boring, though you did manage to make second place.");
     }
+    updateDisplay();
 }
 
 document.getElementById("alexshop").onclick = function() {
@@ -472,6 +489,7 @@ document.getElementById("alexshop").onclick = function() {
     addText("It goes the same as normal. You end up using a total of $6 for everything that happens.");
     affection[0]+=2; happiness++; money-=6;
     if (alexGameSkill < 25) alexGameSkill+=(25-alexGameSkill)/25;
+    updateDisplay();
 }
 
 let alexGameSkill = 0;
@@ -504,6 +522,7 @@ document.getElementById("alexcompete").onclick = function() {
         affection[0]+=1.5; happiness-=2;
         alexGameSkill+=Math.random()*5;
     }
+    updateDisplay();
 }
 
 document.getElementById("alexfuck").onclick = function() {
@@ -528,6 +547,7 @@ document.getElementById("alexfuck").onclick = function() {
         addText("Just another day.")
         giveAchievement(6)
     }
+    updateDisplay();
 }
 
 document.getElementById("hangnat").onclick = function() {
@@ -542,7 +562,7 @@ function clothesSelect(occasion,quit) {
     document.getElementById("natquit").style.display=quit?"block":"none";
     clothesOccasion = occasion;
 }
-function hideClothes() {
+function hideClothes(quit) {
     unpauseWorld()
     document.getElementById("natclothes").style.display="none";
     if (quit) return;
@@ -580,9 +600,10 @@ document.getElementById("natsubmit").onclick = function() {
             else if (bottom!="miniskirt") clothesFail("It's been this long and you still don't know to not use a "+bottom+"...");
             else natHang(top,bottom);
         }
-        case "prom":
+        break; case "prom":
         if (top=="jacket" || top=="sweater") {
             clothesFail("Do you know how hot it'd be in there?")
+            updateDisplay();
             return;
         }
         hideClothes();
@@ -639,8 +660,10 @@ document.getElementById("natsubmit").onclick = function() {
         }
         break;
     }
+    updateDisplay();
 }
 function natHang(top,bottom) {
+    hideClothes();
     const options = ["chat"];
     if (Math.random() < 0.5) {
         if (Math.random()*money > 10) options.push("shop");
@@ -650,6 +673,7 @@ function natHang(top,bottom) {
         } else if (day < 90) options.push("winter")
         if (affection[1]+spAffection[1]+Math.random()*10 > 45-year && top!="trenchcoat"&&top!="jacket") options.push("fuck");
     }
+    let alex=false; //seems to break to have two lets in the same switch so i just won't
     switch (options[Math.floor(Math.random()*options.length)]) {
         case "chat":
         advanceDays(7);
@@ -657,16 +681,16 @@ function natHang(top,bottom) {
         switch (Math.floor(Math.random()*5)) {
             case 0:
             addText("Today was an especially fun day. Why is it that politics isn't normally a thing you're allowed to talk about? Other than the massive disagreements between people, of course...");
-            happiness++; affection[1]-=0.25;
+            happiness+=0.5; affection[1]-=0.25;
             break; case 1:
             addText("The recent drama around school and work varies between all the people. But in the end, they all have the same kind of theme.");
-            happiness++; affection[1]+=2;
+            happiness++; affection[1]++;
             break; case 2:
             addText("Your throat hurts. Probably shouldn't laugh so much, next time.");
-            happiness+=2; affection[1]+=2;
+            happiness+=2; affection[1]++;
             break; case 3:
             addText("These people are really bad at some things. That's fine though, since you are too.");
-            happiness-=0.25; affection[1]+=2;
+            happiness-=0.25; affection[1]++;
             break; case 4:
             addText("No matter how long you go, it seems like you never run out of conversation topics.");
             affection[1]++;
@@ -720,7 +744,6 @@ function natHang(top,bottom) {
         break; case "pool":
         advanceDays(7);
         addText("One of Natalie's friends have a pool. You can use it to play around.");
-        let alex = false;
         if (Math.random()*40 < affection[0]-5) {
             addText("Alex is around too. He's fine with hanging out with the group.");
             affection[0]++; affection[1]--; happiness++;
@@ -740,7 +763,6 @@ function natHang(top,bottom) {
         advanceDays(14); //I need something that lasts longer :/
         money -= 2; happiness+=3;
         addText("Today seems like a good day to go out somewhere farther from home than usual.");
-        let alex = false;
         if (Math.random()*40 < affection[0]-5) {
             addText("Alex is around too. He's fine with hanging out with the group.");
             affection[0]++; happiness++;
@@ -776,6 +798,7 @@ function natHang(top,bottom) {
             giveAchievement(6);
         }
     }
+    updateDisplay();
 }
 
 let partDays = 0;
@@ -786,12 +809,13 @@ function overTime() { //automatically advance 1 day every minute. time waits for
 }
 let dayInterval = setInterval(overTime,2000);
 function pauseWorld() {
-    document.getElementById("options").style.display="none";
+    document.getElementById("actions").style.display="none";
     clearInterval(dayInterval);
 }
 function unpauseWorld() {
-    document.getElementById("options").style.display="block";
+    document.getElementById("actions").style.display="block";
     dayInterval = setInterval(overTime,2000);
+    updateDisplay();
 }
 
 function init() {

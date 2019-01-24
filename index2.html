@@ -6,20 +6,20 @@
         <meta name="1980s Pop Culture" content="A game made for grade 11 history." />
         <link rel="stylesheet" type="text/css" href="styles.css">
     </head>
-<body style="margin-top:35px" onload="init()">
+<body style="margin-top:9px" onload="init()">
     <div id=header>
-        <div id=header1></div><br>
-        
+        <div id=header1></div>
     </div>
     <div id=body></div>
-    <div id=alexselect>
+    <hr>
+    <div id=alexselect style="display:none">
         <button id="alexchat">Chat</button>
         <button id="alexhome">Play at his house</button>
         <button id="alexshop">Shop</button>
         <button id="alexcompete">Compete (in games)</button>
         <button id="alexfuck" style="display:none">Sex!</button>
     </div>
-    <div id=natclothes>
+    <div id=natclothes style="display:none">
         <select id=nattop>
             <option value=sweater>Turtleneck</option>
             <option value=trenchcoat>Trenchcoat</option>
@@ -39,7 +39,6 @@
         <button id="natsubmit">I've decided what to wear!</button>
         <button id="natquit" onclick="hideClothes(true)">Figuring out what to wear is too hard. I give up.</button>
     </div>
-    <hr>
     <div id=actions>
         <button id=newsbtn>Read the news</button>
         <button id=work>Work overtime</button>
