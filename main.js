@@ -31,10 +31,10 @@ function updateDisplay() {
     else happyDisplay = "Extremelyerester happy+" +happiness-85 
     document.getElementById("header1").innerHTML = monthDisplay(day)+", 198"+year+"; Mood: "+happyDisplay+"; Money: $"+money;
 
-    if (affection[0] < -5 || affection[0]/2+happiness < -10) document.getElementById("hangalex").style.display = "none";
-    else if (affection[0] > 0 || affection[0]/2+happiness > -5) document.getElementById("hangalex").style.display = "block";
-    if (affection[1] < -5 || affection[1]/2+happiness < -10) document.getElementById("hangnat").style.display = "none"; //you can't hang out if you aren't close, or you're unhappy!
-    else if (affection[1] > 0 || affection[1]/2+happiness > -5) document.getElementById("hangnat").style.display = "block"; //and once you aren't hanging out, it takes a bit to be able to again
+    if (affection[0] < -10 || affection[0]/2+happiness < -15) document.getElementById("hangalex").style.display = "none";
+    else if (affection[0] > -8 || affection[0]/2+happiness > -10) document.getElementById("hangalex").style.display = "block";
+    if (affection[1] < -10 || affection[1]/2+happiness < -15) document.getElementById("hangnat").style.display = "none"; //you can't hang out if you aren't close, or you're unhappy!
+    else if (affection[1] > -8 || affection[1]/2+happiness > -10) document.getElementById("hangnat").style.display = "block"; //and once you aren't hanging out, it takes a bit to be able to again
 
     document.getElementById("starwars").style.display = year==3&& day>175&&day<235 &&!specialEvents[0]&& happiness*5>day-200 &&money>2.7?"block":"none"; //2 months because it'd be lame if you missed it
 }
